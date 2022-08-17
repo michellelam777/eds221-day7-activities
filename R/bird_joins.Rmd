@@ -1,0 +1,73 @@
+---
+title: "Bird Joins"
+author: "Michelle Lam"
+date: "2022-08-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(lubridate)
+```
+
+
+## Task 1: Joins on birds
+```{r}
+# read in the data
+bird_observations <- read_csv(here("data", "52_pp52_birds_1.csv"))
+
+sites <- read_csv(here("data", "52_pp52_sites_1.csv"))
+
+surveys <- read_csv(here("data", "52_pp52_surveys_1.csv"))
+
+taxalist <- read_csv(here("data", "52_pp52_taxalist_1.csv"))
+```
+
+```{r}
+# create subset of bird_observations that only contains observation for birds with species id "BHCO", "RWBL" and from sites with site ID "LIW" and "NU-C"
+
+birds_subset <- bird_observations |> 
+  filter(species_id %in% c("BHCO", "RWBL"),
+         site_id %in% c("LI-W", "NU-C"))
+```
+
+## Left join practice
+```{r}
+# Use left join(s) to update birds_subset so that it also includes sites and taxalist information. 
+birds_left <-left_join(x = birds_subset, y = sites, by = "site_id") |> 
+  left_join(y = taxalist, by = "species_id")
+```
+
+## Full join practice
+```{r}
+# Write code to full_join the birds_subset and sites data into a new object called birds_full
+birds_full <- full_join(birds_subset, sites, by = "site_id")
+```
+
+## Inner join practice
+```{r}
+#Write code to inner_join() the birds_subset and taxalist, called birds_inner. Include an argument for what variable you’ll be joining by.
+birds_inner <- inner_join(birds_subset, taxalist, by = "species_id")
+
+birds_left_2 <- left_join(birds_subset, taxalist, by = "species_id")
+```
+
+## Task 2: Data wrangling and visualization with birds
+```{r}
+birds <- bird_observations |> 
+  rename(bird_obs_notes = notes) |> 
+  left_join(sites, by = "site_id") |> 
+  left_join(taxalist, by = "species_id") |> 
+  left_join(surveys, by = c("survey_id", "site_id")) |> 
+ select(survey_date, common_name, park_name, bird_count) |> 
+  mutate(survey_month = month(survey_date)) |> 
+  mutate(survey_month = as.factor(survey_month)) |>
+  relocate(survey_month, .after = survey_date) |> 
+  group_by(park_name, survey_month) |> 
+  summarize(count = n()) |> 
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+```
+
